@@ -1,13 +1,12 @@
 from torch.utils.data import Dataset
 from torchvision import transforms
 from data.db import get_image_data
-from data.collection import collect, get_next_images
-from data.config import images_path
+from data.collection import collect, get_next_images, get_skipped
+from config import images_path
 from PIL import Image
-import pandas as pd, data.config as config
+import pandas as pd
 from PIL import Image
 import os, warnings, asyncio
-from numpy import asarray
 
 
 warnings.filterwarnings(
@@ -54,7 +53,7 @@ def get_present_images():
 
 
 def clean_images(df: pd.DataFrame):
-    path = config.images_path
+    path = images_path
 
     for i, (img_id, _, img_format, _, _) in enumerate(df.itertuples(index=False), 1):
         img_path = path / f'{img_id}.{img_format}'
@@ -74,19 +73,19 @@ if __name__ == '__main__':
     df = get_present_images()
     df = get_image_data(df)
 
+    print(f'Collected: {len(df)}')
 
-    #to_collect = get_next_images(df, 'filtered', 10000)
-    #clean_images(df)
+    # to_collect = get_next_images(df, 'filtered', 10000)
+    # to_collect = get_skipped(df, 206400 - len(df))
+    # to_collect = get_image_data(pd.DataFrame({ 'id': [] }))
 
+    # asyncio.run(collect(to_collect, images_path, lambda: 0.3))
 
-    #asyncio.run(collect(to_collect, images_path, lambda: 0.3))
-
-    #redo = df[df['id'].isin((722, 1195, 740813, 1720692, 2112573, 2526115))]
     #asyncio.run(collect(redo, images_path, lambda: 0))
 
     #broken = [481684]
 
-    df = df[df['score'] >= 80]
+    df = df.sort_values('id')
     df['tags'] = df['tags'].apply(lambda tags: '|'.join(tags))
-    df.to_csv('image_data.csv', index=False)
+    df.to_csv('data/image_data.csv', index=False)
     print('Done')

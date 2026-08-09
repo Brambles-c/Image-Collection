@@ -14,6 +14,24 @@ def get_next_images(img_df, filtered_table_name, limit) -> list[tuple[int, datet
         columns=('id', 'created_at', 'image_format')
     )
 
+def get_skipped(df: pd.DataFrame, limit: int):
+    highest = max(df["id"])
+
+    return pd.DataFrame(query(f"""
+        WITH ids(id) AS (
+            VALUES {", ".join(f"({i})" for i in df["id"])}
+        )
+        SELECT id, created_at, image_format
+        FROM filtered f
+        WHERE f.id < {highest}
+        AND NOT EXISTS (
+            SELECT 1
+            FROM ids
+            WHERE f.id = ids.id
+        )
+        LIMIT {limit}
+    """).all())
+
 async def collect(img_df: pd.DataFrame, img_output_path: Path, wait_time):
     fetcher = Fetcher()
     to_collect = len(img_df)

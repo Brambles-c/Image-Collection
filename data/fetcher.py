@@ -29,7 +29,7 @@ class Fetcher:
                     
                     image_id = identifier.split("/")[-1]
 
-                    print(f"\nFailed to fetch for #{image_id}\n")
+                    print(f"\nFailed to fetch #{image_id}\n")
                     print(resp.status)
                     print(await resp.read())
                     return None
